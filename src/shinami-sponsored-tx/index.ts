@@ -11,8 +11,13 @@ declare module "@scallop-io/sui-kit" {
     requestShinamiSponsorship(
       tx: Uint8Array | TransactionBlock | SuiTxBlock,
       gasBudget: number,
-      derivePathParams?: DerivePathParams
+      sender: string,
     ): Promise<SponsoredTransaction>;
+
+    sendShinamiSponsoredTxn(
+      tx: SponsoredTransaction,
+      userSig: string,
+    ): Promise<SuiTransactionBlockResponse>;
 
     signAndSendShinamiSponsoredTxn(
       tx: Uint8Array | TransactionBlock | SuiTxBlock,
@@ -22,7 +27,9 @@ declare module "@scallop-io/sui-kit" {
 
     // Query the status of a sponsored transaction
     // Result is one of: "IN_FLIGHT" | "COMPLETE" | "INVALID"
-    queryShinamiSponsoredTxnStatus(txDigest: string): Promise<SponsoredTransactionStatus>;
+    queryShinamiSponsoredTxnStatus(
+      txDigest: string,
+    ): Promise<SponsoredTransactionStatus>;
   }
 }
 
@@ -34,7 +41,7 @@ SuiKit.prototype.initShinamiGasSponsor = function (gasAccessKey: string): void {
 SuiKit.prototype.requestShinamiSponsorship = async function (
   tx: Uint8Array | TransactionBlock | SuiTxBlock,
   gasBudget: number,
-  derivePathParams?: DerivePathParams
+  sender: string,
 ): Promise<SponsoredTransaction> {
   if (!this.shinamiGasSponsor) {
     throw new Error("Please call suiKit.initShinamiGasSponsor(gasAccessKey) first.");
@@ -46,11 +53,25 @@ SuiKit.prototype.requestShinamiSponsorship = async function (
     ? await tx.build({onlyTransactionKind: true, provider: this.provider()})
     : tx;
   const txnBase64 = toB64(txnBytes);
-  console.log("txnBase64", txnBase64)
 
   // Sponsor the transaction
-  const sender = this.getAddress(derivePathParams);
   return this.shinamiGasSponsor.gas_sponsorTransactionBlock(txnBase64, sender, gasBudget);
+}
+
+SuiKit.prototype.sendShinamiSponsoredTxn = async function (
+  sponsoredTxn: SponsoredTransaction,
+  userSig: string,
+): Promise<SuiTransactionBlockResponse> {
+  // Send the full transaction payload, along with the gas owner's signature for execution on the Sui blockchain
+  const executeResponse = await this.provider().executeTransactionBlock(
+    {
+      transactionBlock: sponsoredTxn.txBytes,
+      signature: [userSig, sponsoredTxn.signature],
+      options: {showEffects: true, showEvents: true, showObjectChanges: true},
+      requestType: 'WaitForLocalExecution'
+    }
+  );
+  return executeResponse;
 }
 
 SuiKit.prototype.signAndSendShinamiSponsoredTxn = async function (
@@ -58,21 +79,14 @@ SuiKit.prototype.signAndSendShinamiSponsoredTxn = async function (
   gasBudget: number,
   derivePathParams?: DerivePathParams
 ): Promise<SuiTransactionBlockResponse> {
-  const sponsorTxn = await this.requestShinamiSponsorship(tx, gasBudget, derivePathParams);
+  const sender = this.getAddress(derivePathParams);
+  const sponsorTxn = await this.requestShinamiSponsorship(tx, gasBudget, sender);
 
   // Sign the transaction with the sender's private key
   const senderSig = await this.signTxn(TransactionBlock.from(sponsorTxn.txBytes));
 
   // Send the full transaction payload, along with the gas owner and sender's signatures for execution on the Sui blockchain
-  const executeResponse = await this.provider().executeTransactionBlock(
-    {
-      transactionBlock: sponsorTxn.txBytes,
-      signature: [senderSig.signature, sponsorTxn.signature],
-      options: {showEffects: true, showEvents: true, showObjectChanges: true},
-      requestType: 'WaitForLocalExecution'
-    }
-  );
-  return executeResponse;
+  return this.sendShinamiSponsoredTxn(sponsorTxn, senderSig.signature);
 }
 
 SuiKit.prototype.queryShinamiSponsoredTxnStatus = async function (txDigest: string): Promise<SponsoredTransactionStatus> {
