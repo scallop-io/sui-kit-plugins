@@ -1,0 +1,65 @@
+{
+  "name": "@scallop-io/sui-kit-plugins",
+  "version": "0.34.1",
+  "description": "Plugins for SUI Kit",
+  "keywords": [
+    "SUI Kit",
+    "scallop labs",
+    "move",
+    "blockchain"
+  ],
+  "author": "team@scallop.io",
+  "homepage": "https://github.com/scallop-io/sui-kit-plugins#readme",
+  "bugs": "https://github.com/scallop-io/sui-kit-plugins/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scallop-io/sui-kit-plugins.git"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "clean": "rm -rf tsconfig.tsbuildinfo ./dist",
+    "build": "npm run build:types && npm run build:tsup",
+    "build:tsup": "tsup ./src/index.ts --format esm,cjs --sourcemap",
+    "build:types": "tsc --build",
+    "watch:tsup": "tsup ./src/index.ts --format esm,cjs --clean --splitting --watch",
+    "watch:types": "tsc --watch",
+    "watch": "pnpm run clean & pnpm run watch:types & pnpm run watch:tsup"
+  },
+  "dependencies": {
+    "@mysten/sui.js": "^0.34.1",
+    "@scallop-io/sui-kit": "^0.34.1",
+    "typed-rpc": "^3.0.0"
+  },
+  "peerDependencies": {
+    "@mysten/sui.js": "^0.34.1",
+    "@scallop-io/sui-kit": "^0.34.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.1",
+    "@types/tmp": "^0.2.3",
+    "dotenv": "^16.0.3",
+    "ts-node": "^10.9.1",
+    "tsup": "^6.7.0",
+    "typescript": "^5.0.4"
+  }
+}

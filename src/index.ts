@@ -1,0 +1,1 @@
+import "./shinami-sponsored-tx"
