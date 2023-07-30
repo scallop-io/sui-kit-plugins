@@ -1,6 +1,6 @@
 {
   "name": "@scallop-io/sui-kit-plugins",
-  "version": "0.34.2",
+  "version": "0.37.1",
   "description": "Plugins for SUI Kit",
   "keywords": [
     "SUI Kit",
@@ -46,13 +46,13 @@
     "watch": "pnpm run clean & pnpm run watch:types & pnpm run watch:tsup"
   },
   "dependencies": {
-    "@mysten/sui.js": "^0.34.1",
-    "@scallop-io/sui-kit": "^0.34.1",
+    "@mysten/sui.js": "^0.37.1",
+    "@scallop-io/sui-kit": "^0.38.1",
     "typed-rpc": "^3.0.0"
   },
   "peerDependencies": {
-    "@mysten/sui.js": "^0.34.1",
-    "@scallop-io/sui-kit": "^0.34.1"
+    "@mysten/sui.js": "^0.37.1",
+    "@scallop-io/sui-kit": "^0.38.1"
   },
   "devDependencies": {
     "@types/node": "^20.2.1",
